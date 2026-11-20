@@ -1,0 +1,6 @@
+{
+  "name": "workstyle-browser",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": { "@playwright/mcp": "0.0.85" }
+}

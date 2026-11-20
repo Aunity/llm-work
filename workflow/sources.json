@@ -1,0 +1,34 @@
+{
+  "mattpocock": {
+    "repository": "https://github.com/mattpocock/skills",
+    "commit": "5863806dd4e15c63174bee4e7515a4256792ecfa",
+    "paths": [
+      "skills/engineering/prototype",
+      "skills/engineering/retro",
+      "skills/productivity/teach",
+      "skills/productivity/writing-for-agents"
+    ],
+    "local_modifications": [
+      {
+        "path": "workflow/upstream/teach/SKILL.md",
+        "original_sha256": "550482c2d674b085c9043b87bfdc14a8f2ec453c736119e7fcbb1e9332bffeba",
+        "change": "Removed unsupported disable-model-invocation/argument-hint frontmatter; retained original body and agents/openai.yaml invocation policy."
+      },
+      {
+        "path": "workflow/upstream/retro/SKILL.md",
+        "original_sha256": "33fbc28568e3146f20fd908b12998bc0ab30aa4f4c87288199a40793efa94696",
+        "change": "Removed unsupported disable-model-invocation/argument-hint frontmatter; retained original body and agents/openai.yaml invocation policy."
+      }
+    ]
+  },
+  "browser_mcp": {
+    "package": "@playwright/mcp",
+    "version": "0.0.85",
+    "repository": "https://github.com/microsoft/playwright-mcp"
+  },
+  "deepwiki": {
+    "url": "https://mcp.deepwiki.com/mcp",
+    "documentation": "https://docs.devin.ai/work-with-devin/deepwiki-mcp"
+  },
+  "local_skill": "workflow/skills/workstyle-task"
+}

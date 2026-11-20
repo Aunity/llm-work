@@ -1,0 +1,3 @@
+interface:
+  display_name: "Workstyle Task"
+  short_description: "Resume multi-step tasks with explicit evidence and handoffs"

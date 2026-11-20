@@ -1,0 +1,26 @@
+node_modules/
+workflow/check-results.json
+baseline/install-result.json
+baseline/check-results.json
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.DS_Store
+
+# Local sessions, machine configuration and credentials.
+/.workstyle/
+/.codex/
+/.agents/
+/.aws/
+.env
+.env.*
+!.env.example
+auth.json
+*.pem
+*.key
+
+# Teaching output belongs in a separate personal workspace.
+/learning/*
+!/learning/README.md

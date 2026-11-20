@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Launch the selected Workstyle mode without shell interpolation."""
+import argparse
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parent.parent
+PROMPTS = {
+    "work": "Use $workstyle-task for this task. Investigate, implement, verify and deliver the requested outcome.",
+    "continue": "Use $workstyle-task to recover the requested unfinished task from this project's .workstyle/tasks/ and continue it.",
+    "learn": "Use $teach in this teaching workspace. Ground the lesson in reliable sources and include a learner exercise and a transfer check.",
+    "retro": "Use $retro and its $writing-for-agents reference to inspect this project's relevant task evidence and session. Map upstream tool names to the actual Codex tools available here. Present concrete environment improvements with supporting evidence.",
+}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("mode", choices=[*PROMPTS, "doctor"])
+    parser.add_argument("project", nargs="?", default=".")
+    parser.add_argument("request", nargs="?", default="")
+    parser.add_argument("--dry-run", action="store_true", help="print launch arguments without starting Codex")
+    parser.add_argument("--mcp", action="store_true", help="doctor: exercise both MCP services")
+    args = parser.parse_args()
+    project = Path(args.project).expanduser().resolve()
+    if not project.is_dir():
+        parser.error("project must be an existing directory")
+    if args.mode == "doctor":
+        command = [sys.executable, str(ROOT / "workflow/check.py")]
+        if args.mcp:
+            command.append("--mcp")
+        return subprocess.call(command)
+    if args.mcp:
+        parser.error("--mcp is only supported in doctor mode")
+    codex = shutil.which("codex")
+    if not codex:
+        parser.error("codex is not on PATH")
+    prompt = PROMPTS[args.mode]
+    if args.request:
+        prompt += "\n\nUser request:\n" + args.request
+    elif args.mode in {"work", "learn"}:
+        prompt = ("The Workstyle profile is selected. Confirm the current directory and available "
+                  "workflow, then wait for my task or learning topic. Do not create task records "
+                  "or lessons until I provide a request.")
+    argv = [codex, "--profile", "workstyle", "--cd", str(project), prompt]
+    if args.dry_run:
+        print(json.dumps(argv, ensure_ascii=False, indent=2))
+        return 0
+    profile = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "workstyle.config.toml"
+    if not profile.is_file():
+        parser.error("Workstyle is not installed. Run python3 workflow/install.py from " + str(ROOT))
+    os.execv(codex, argv)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

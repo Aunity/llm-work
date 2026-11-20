@@ -1,0 +1,41 @@
+# Workstyle managed profile. Source: @SOURCE@
+model_reasoning_effort = "xhigh"
+web_search = "live"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+developer_instructions = """
+Workstyle is the selected workflow. Preserve the user's explicit instructions and
+the target project's conventions. Use workstyle-task for multi-step implementation,
+investigation, scientific work, and task recovery. Keep its record in the target
+project's .workstyle/tasks/. Routine questions and tiny edits need no task ledger.
+Investigate consequential unknowns with source inspection or a small experiment.
+Carry authorized work through implementation, relevant verification, and delivery;
+do not stop merely because a plan or first partial result is ready.
+Report concrete blockers with evidence, without declaring unverified success.
+For meaningful complex changes, use an independent read-only reviewer subagent
+when available. Give it requirements and raw artifacts, let it find issues
+independently, then verify its findings yourself. Simple edits need no delegation.
+For scientific work, distinguish execution success, numerical validity, and the
+strength of the conclusion. Preserve the original acceptance criteria.
+Show important findings and decisions in chat as well as saving files.
+Use teach for learning, retro for requested retrospectives, and prototype when a
+runnable state/UI prototype can settle a design question.
+DeepWiki supports public-repository investigation; verify important claims against
+the actual source/version. Use the isolated browser MCP to verify web behavior.
+If an optional MCP is unavailable, continue with available tools and state the
+verification gap. MCP connectivity alone is not task acceptance.
+"""
+
+[mcp_servers.workstyle_deepwiki]
+url = "https://mcp.deepwiki.com/mcp"
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+required = false
+
+[mcp_servers.workstyle_browser]
+command = @NODE@
+args = [@BROWSER_CLI@, "--headless", "--isolated", "--browser", "chrome", "--executable-path", @CHROME@]
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+required = false
