@@ -88,6 +88,15 @@ def restore(home, directory):
     if "after_state_sha256" in manifest and (not state_path.is_file() or
             digest(state_path.read_bytes()) != manifest["after_state_sha256"]):
         raise RuntimeError("Installation state has changed; restore refused")
+    if "after_state_sha256" not in manifest and state_path.exists():
+        # A legacy backup predates adoption by the state-aware installer.
+        adopted = json.loads(state_path.read_text())
+        current = tomllib.loads(config.read_text())
+        if (adopted.get("agents_sha256") != digest(agents.read_bytes()) or not adopted.get("services") or
+                any(current.get("mcp_servers", {}).get(name) != service
+                    for name, service in adopted["services"].items()) or
+                any(current.get(key) != value for key, value in adopted.get("settings", {}).items())):
+            raise RuntimeError("Adopted installation state has changed; legacy restore refused")
     for destination, source in manifest["added_links"].items():
         p = Path(destination)
         if os.path.lexists(p) and not (p.is_symlink() and p.resolve() == Path(source).resolve()):
@@ -109,6 +118,8 @@ def restore(home, directory):
             atomic_write(state_path, (directory / "baseline-install.json").read_bytes())
         else:
             state_path.unlink()
+    elif state_path.exists():
+        state_path.unlink()
     print(json.dumps({"restored_from": str(directory)}, ensure_ascii=False))
 
 
@@ -121,11 +132,16 @@ def apply(home, report_path=None, update=False):
     original = config.read_bytes() if config_existed else b""
     old_state = state_path.read_bytes() if state_path.exists() else None
     state = json.loads(old_state) if old_state is not None else {}
-    if state or update:
+    sources = json.loads((ROOT / "baseline/sources.json").read_text())["skills"]
+    legacy = old_state is None and any(
+        (home / "skills" / item["name"]).is_symlink() and
+        (home / "skills" / item["name"]).resolve() == (ROOT / "baseline/skills" / item["name"]).resolve()
+        for item in sources)
+    if state or update or legacy:
         before = tomllib.loads(original.decode("utf-8"))
         previous_settings = state.get("settings", {})
         for key, value in UPDATES.items():
-            if before.get(key) == value or (key not in before and key not in previous_settings):
+            if before.get(key) == value or (not legacy and key not in before and key not in previous_settings):
                 continue
             if not (update and key in previous_settings and before.get(key) == previous_settings[key]):
                 raise RuntimeError("Locally changed baseline setting left untouched: " + key)
@@ -139,7 +155,6 @@ def apply(home, report_path=None, update=False):
     if os.path.lexists(agents) and (not agents.is_file() or (agents.read_bytes() != desired_agents and not
             (update and state.get("agents_sha256") == digest(agents.read_bytes())))):
         raise RuntimeError("Existing AGENTS.md left untouched; merge is required")
-    sources = json.loads((ROOT / "baseline/sources.json").read_text())["skills"]
     added_links = {}
     for item in sources:
         name = item["name"]

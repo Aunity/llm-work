@@ -169,6 +169,41 @@ class BaselineTests(unittest.TestCase):
                 self.assertNotEqual(run.returncode, 0)
                 self.assertEqual(config.read_bytes(), edited)
 
+    def test_legacy_adoption_preserves_changed_settings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = self.make_home(directory)
+            self.assertEqual(self.run_apply(home).returncode, 0)
+            (home / "baseline-install.json").unlink()
+            config = home / "config.toml"
+            edited = config.read_bytes().replace(b'web_search = "live"', b'web_search = "disabled"')
+            config.write_bytes(edited)
+            for flags in ((), ("--update",)):
+                run = self.run_apply(home, *flags)
+                self.assertNotEqual(run.returncode, 0)
+                self.assertEqual(config.read_bytes(), edited)
+                self.assertFalse((home / "baseline-install.json").exists())
+
+    def test_legacy_backup_restore_removes_adopted_state_and_allows_reinstall(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = self.make_home(directory)
+            run = self.run_apply(home)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            backup = Path(json.loads(run.stdout)["backup"])
+            manifest_path = backup / "manifest.json"
+            manifest = json.loads(manifest_path.read_text())
+            for key in ("after_state_sha256", "state_existed", "config_existed"):
+                manifest.pop(key)
+            manifest_path.write_text(json.dumps(manifest))
+            (home / "baseline-install.json").unlink()
+            adopted = self.run_apply(home, "--update")
+            self.assertEqual(adopted.returncode, 0, adopted.stderr)
+            restored = self.run_apply(home, "--restore", str(backup))
+            self.assertEqual(restored.returncode, 0, restored.stderr)
+            self.assertEqual((home / "config.toml").read_bytes(), ORIGINAL)
+            self.assertFalse((home / "baseline-install.json").exists())
+            reinstalled = self.run_apply(home)
+            self.assertEqual(reinstalled.returncode, 0, reinstalled.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

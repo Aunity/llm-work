@@ -96,7 +96,7 @@ codex-work doctor --mcp
 
 安装状态记录为 `$CODEX_HOME/workstyle-install.json` 和 `baseline-install.json`；配置备份位于 `$CODEX_HOME/backups/`。发生本地修改冲突时先将个人文件备份到仓库外，再手工合并差异；没有强制覆盖选项。
 
-旧安装若没有状态记录，先用相同内容运行一次新版安装器登记；仅在当前文件与期望配置一致时登记。内容不同会保留原文件并停止，需要先核对差异。移动克隆目录前按下节撤回原安装，再从新位置安装。
+旧安装若没有状态记录，先运行 `python3 workflow/bootstrap.py --skip-deps --update` 登记；仅在当前文件与期望配置一致时登记。内容不同会保留原文件并停止，需要先核对差异。移动克隆目录前按下节撤回原安装，再从新位置安装。
 
 ## 回退与卸载
 
