@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Open Workstyle in the current project; no subcommand is needed."""
+"""Open Workstyle and orient in the current project; no subcommand is needed."""
 import argparse
 import json
 import os
@@ -67,6 +67,15 @@ def main():
         if request:
             prompt += "\n\nUser request:\n" + request
         argv.append(prompt)
+    else:
+        startup = ROOT / "workflow/startup.md"
+        try:
+            instructions = startup.read_text(encoding="utf-8")
+        except OSError as error:
+            parser.error("cannot load startup instructions from " + str(startup) + ": " + str(error))
+        name = json.dumps(project.name or str(project), ensure_ascii=False)
+        location = json.dumps(str(project), ensure_ascii=False)
+        argv.append("项目接手：" + name + "\n项目目录：" + location + "\n\n" + instructions)
     if args.dry_run:
         print(json.dumps(argv, ensure_ascii=False, indent=2))
         return 0

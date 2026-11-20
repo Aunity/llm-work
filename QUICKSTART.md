@@ -55,7 +55,7 @@ python3 workflow/bootstrap.py --skip-deps
 
 ## 工作、学习与恢复
 
-日常只需记住 `codex-work`。进入项目文件夹后启动，再在对话里说明任务、问题或学习主题：
+日常只需记住 `codex-work`。进入项目文件夹后启动，它会先了解当前目录，再交给你安排任务：
 
 ```bash
 cd /path/to/project
@@ -64,13 +64,18 @@ codex-work
 
 | 场景 | 命令 |
 | --- | --- |
-| 在当前项目开始新对话 | `codex-work` |
+| 自动了解当前目录并交接 | `codex-work` |
 | 选择当前项目的原对话继续 | `codex-work resume` |
 | 从其他位置打开指定项目 | `codex-work -C /path/to/project` |
 
 默认项目始终是运行命令时的当前目录，不会自动改成 Workstyle 配置仓库或父目录。`-C`（长名称 `--project`）也适用于其他子命令，例如 `codex-work resume -C /path/to/project`。目标目录必须已存在。
 
-无参数启动会直接进入输入界面，不自动发送“确认目录并等待”的开场白，不创建记录或课程。任务记录写入目标项目 `.workstyle/tasks/`；简单问答和很小的修改不需要记录。
+无具体请求时，启动器会发送一条以当前项目名称开头的交接请求。Codex 先只读查看目录，再根据实际内容分流：
+
+- **空目录或尚无实质项目内容**：说明目录状态，等待你安排新任务和预期交付。
+- **已有项目内容**：读取项目说明、进展/重启/交接材料和任务记录，按需核对代码、数据、产物及 Git 状态；给出项目背景、当前进度、未完成事项和建议接手点，再由你选择继续哪项工作或安排新任务。
+
+启动阶段不创建任务记录或课程、不修改项目或自动执行旧待办。已有文档优先沿用；无法确认的信息会明确列出。收到具体请求后才进入执行流程，任务记录写在目标项目 `.workstyle/tasks/`；简单问答和很小的修改不需要记录。详细启动规则见 [项目交接指令](workflow/startup.md)。
 
 需要特定操作时再使用以下选项：
 
@@ -83,11 +88,11 @@ codex-work
 | 复盘当前项目 | `codex-work retro` |
 | 检查 Workstyle 安装 | `codex-work doctor` |
 
-`resume` 恢复本机保存的原对话；`continue` 新开会话，读取项目的 `.workstyle/tasks/` 恢复任务。普通启动无需选择这些模式。学习时可在对话中明确写 `$teach 学习主题`，复盘可写 `$retro`；使用 `$prototype` 可验证状态逻辑或 UI 设计。
+`resume` 恢复本机保存的原对话；`continue` 新开会话，读取项目的 `.workstyle/tasks/` 恢复任务。已经用 `--request` 提供具体任务或主题时直接处理请求；这些显式操作不会被自动交接流程覆盖。普通启动无需选择模式。学习时可在对话中明确写 `$teach 学习主题`，复盘可写 `$retro`；使用 `$prototype` 可验证状态逻辑或 UI 设计。
 
 teach 与 retro 保留上游的显式调用策略，通过 `learn` / `retro` 入口或直接指定 `$teach` / `$retro` 使用；不出现在默认提示词中的隐式技能清单不代表安装失败。
 
-旧格式 `codex-work work PROJECT [REQUEST]` 与 `continue/learn/retro PROJECT [REQUEST]` 继续兼容。旧格式中第一个位置参数仍是项目目录；使用新格式时，任务或主题通过 `--request` 提供，避免把文字误当成目录。`-C` 不能与旧位置目录同时指定。只给 `work` 或 `learn` 而不给请求时，也直接等待输入。
+旧格式 `codex-work work PROJECT [REQUEST]` 与 `continue/learn/retro PROJECT [REQUEST]` 继续兼容。旧格式中第一个位置参数仍是项目目录；使用新格式时，任务或主题通过 `--request` 提供，避免把文字误当成目录。`-C` 不能与旧位置目录同时指定。只给 `work` 或 `learn` 而不给请求时，也先自动了解目录再等待具体任务或学习主题。
 
 任务记录与个人学习材料默认不纳入本配置仓库。跨机器继续同一任务时，另外同步目标项目的记录和所需产物；迁移配置本身不会迁移历史对话。
 

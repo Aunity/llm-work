@@ -22,7 +22,9 @@ cd /path/to/project
 codex-work
 ```
 
-进入后直接说明任务或问题即可。恢复这个项目的原对话用 `codex-work resume`；从其他位置打开项目用 `codex-work -C /path/to/project`。启动时不自动发送开场请求，也不自动创建任务记录。
+启动后会自动只读查看当前目录：空目录提示你安排新任务；已有项目先读取说明、进展与交接材料，结合当前文件给出背景摘要和下一步选择。这个阶段不创建任务记录或课程，也不自动执行旧待办。接着直接说明要做的事即可。
+
+恢复这个项目的原对话用 `codex-work resume`；从其他位置打开项目用 `codex-work -C /path/to/project`。启动规则集中维护在 [项目交接指令](workflow/startup.md)。
 
 ## 新机器部署
 

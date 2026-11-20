@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -40,17 +41,24 @@ class LauncherTests(unittest.TestCase):
     def expected(self, project=None):
         return ["--profile", "workstyle", "--cd", str(project or self.project)]
 
-    def test_no_arguments_uses_callers_directory_without_sending_a_prompt(self):
+    def assert_startup(self, actual, project):
+        self.assertEqual(actual[:4], self.expected(project))
+        self.assertEqual(len(actual), 5)
+        lines = actual[4].splitlines()
+        self.assertEqual(json.loads(lines[0].removeprefix("项目接手：")), project.name)
+        self.assertEqual(json.loads(lines[1].removeprefix("项目目录：")), str(project))
+
+    def test_no_request_starts_orientation_in_callers_directory(self):
         for arguments in ((), ("work",), ("learn",)):
             with self.subTest(arguments=arguments):
-                self.assertEqual(json.loads(self.launch(*arguments).stdout), self.expected())
+                self.assert_startup(json.loads(self.launch(*arguments).stdout), self.project)
         self.assertEqual(list(self.project.iterdir()), [])
 
     def test_explicit_project_is_resolved_relative_to_callers_directory(self):
         for option in ("-C", "--project"):
             with self.subTest(option=option):
                 actual = json.loads(self.launch(option, "../other project").stdout)
-                self.assertEqual(actual, self.expected(self.other))
+                self.assert_startup(actual, self.other)
         self.assertEqual(list(self.project.iterdir()), [])
         self.assertEqual(list(self.other.iterdir()), [])
 
@@ -68,6 +76,35 @@ class LauncherTests(unittest.TestCase):
         self.assertFalse(marker.exists())
         self.assertFalse((self.project / ".workstyle").exists())
         self.assertFalse((self.other / ".workstyle").exists())
+        self.assertNotIn("项目接手：", actual[4])
+
+    def test_project_names_are_distinct_and_paths_stay_literal(self):
+        marker = self.base / "must-not-exist"
+        unusual = self.project / '项目 "quoted"\n$(touch must-not-exist)'
+        unusual.mkdir()
+        default = json.loads(self.launch().stdout)
+        actual = json.loads(self.launch("-C", unusual).stdout)
+        self.assert_startup(actual, unusual)
+        self.assertNotEqual(actual[4].splitlines()[0], default[4].splitlines()[0])
+        self.assertFalse(marker.exists())
+        self.assertFalse((self.project / "must-not-exist").exists())
+
+    def test_startup_instructions_follow_the_launcher_checkout_and_missing_file_fails(self):
+        checkout = self.base / "separate checkout"
+        (checkout / "bin").mkdir(parents=True)
+        copied = checkout / "bin/codex-work"
+        shutil.copy2(ROOT / "bin/codex-work", copied)
+        self.launcher.unlink()
+        self.launcher.symlink_to(copied)
+        missing = self.launch(check=False)
+        self.assertEqual(missing.returncode, 2)
+        self.assertEqual(missing.stdout, "")
+        self.assertIn("cannot load startup instructions", missing.stderr)
+        (checkout / "workflow").mkdir()
+        (checkout / "workflow/startup.md").write_text("This checkout's startup instructions.\n")
+        actual = json.loads(self.launch().stdout)
+        self.assert_startup(actual, self.project)
+        self.assertTrue(actual[4].endswith("This checkout's startup instructions.\n"))
 
     def test_resume_reopens_conversations_in_the_selected_project(self):
         for options, project, tail in (
@@ -104,7 +141,7 @@ class LauncherTests(unittest.TestCase):
                 self.assertEqual(actual[:4], self.expected(self.other))
                 self.assertIn(skill, actual[4])
                 self.assertTrue(actual[4].endswith("\n\nUser request:\nexisting request"))
-        self.assertEqual(json.loads(self.launch("work", self.other).stdout), self.expected(self.other))
+        self.assert_startup(json.loads(self.launch("work", self.other).stdout), self.other)
 
     def test_invalid_usage_stops_before_launching_codex(self):
         cases = (
@@ -135,10 +172,11 @@ class LauncherTests(unittest.TestCase):
 
     def test_dry_run_prints_commands_without_starting_codex_or_doctor(self):
         (self.home / "workstyle.config.toml").unlink()
-        for options, tail in (((), []), (("resume", "--last"), ["resume", "--last"])):
-            with self.subTest(options=options):
-                actual = json.loads(self.launch(*options, "--dry-run").stdout)
-                self.assertEqual(actual, [str(self.codex), *self.expected(), *tail])
+        actual = json.loads(self.launch("--dry-run").stdout)
+        self.assertEqual(actual[0], str(self.codex))
+        self.assert_startup(actual[1:], self.project)
+        actual = json.loads(self.launch("resume", "--last", "--dry-run").stdout)
+        self.assertEqual(actual, [str(self.codex), *self.expected(), "resume", "--last"])
         for options in ((), ("--mcp",)):
             with self.subTest(options=options):
                 actual = json.loads(self.launch("doctor", *options, "--dry-run").stdout)
