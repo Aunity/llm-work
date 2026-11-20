@@ -9,11 +9,20 @@
 | `docs/` | 工作方法、技能与 MCP 调研、社区证据和效果评估方案 |
 | `baseline/` | 普通 Codex 的 9 个精选 skills、个人约定、Context7 / DeepWiki / Playwright 配置、备份与回退 |
 | `workflow/` | Workstyle profile、5 个工作流 skills、依赖锁定、部署与检查 |
-| `bin/codex-work` | `work`、`continue`、`learn`、`retro`、`doctor` 入口 |
+| `bin/codex-work` | 统一日常入口，默认打开当前目录，支持恢复会话、任务、学习与复盘 |
 | `tests/` | 不依赖个人配置或网络的安装、更新、回退和启动器测试 |
 | `learning/` | 学习入口说明；实际课程与个人记录不进入此仓库 |
 
-普通 `codex` 使用基础配置；`codex-work` 额外选择 Workstyle profile。技能通过符号链接指向克隆目录，配置中的机器路径在安装时生成，因此安装后需要保留克隆目录。
+日常只使用 `codex-work`，它自动选择 Workstyle profile。每个项目文件夹就是一个工作目录；未指定目录时使用启动命令时所在的文件夹。技能通过符号链接指向本仓库，配置中的机器路径在安装时生成，因此安装后需要保留克隆目录。
+
+## 日常使用
+
+```bash
+cd /path/to/project
+codex-work
+```
+
+进入后直接说明任务或问题即可。恢复这个项目的原对话用 `codex-work resume`；从其他位置打开项目用 `codex-work -C /path/to/project`。启动时不自动发送开场请求，也不自动创建任务记录。
 
 ## 新机器部署
 
@@ -24,7 +33,7 @@ git clone YOUR_REPOSITORY_URL workstyle
 cd workstyle
 python3 workflow/bootstrap.py
 export PATH="$HOME/.local/bin:$PATH"
-codex-work work /path/to/project
+codex-work -C /path/to/project
 ```
 
 前置版本、Python 3.10 的依赖、浏览器系统库、只安装 Workstyle、更新与回退均见 [快速开始](QUICKSTART.md)。安装器不复制登录信息、API key 或旧机器的个人模型配置。
@@ -38,7 +47,7 @@ git diff --check
 
 用功能分支修改，检查通过后提交；其他机器拉取同一版本后运行 `python3 workflow/bootstrap.py --update`。详细约定见 [维护指南](CONTRIBUTING.md)，第三方内容见 [来源与许可证](THIRD_PARTY_NOTICES.md)。
 
-本次 Linux 上的全新克隆部署、21 项测试和真实 MCP 操作结果见 [验收记录](workflow/VALIDATION.md)，其中注明实际验证与未验证范围。
+本次 Linux 上的全新克隆部署、自动化测试和真实 MCP 操作结果见 [验收记录](workflow/VALIDATION.md)，其中注明实际验证与未验证范围。
 
 ## 背景材料
 
