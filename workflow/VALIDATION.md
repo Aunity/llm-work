@@ -1,5 +1,32 @@
 # Workstyle 安装验收
 
+## 2026 年 11 月 20 日：Git 与迁移部署
+
+验收对象：代码版本 `aecf202`。从本地 Git 仓库真实克隆到含空格的新路径，使用空 npm 缓存、空浏览器缓存、空 Codex home 和独立 bin 目录；未复用原工作区的 node_modules 或原用户配置。
+
+环境：Linux，Python 3.10.12 / tomli 2.4.1、Node 22.23.4、npm 10.9.9、Git 2.34.1、Codex CLI 0.167.2。浏览器 MCP 0.0.85、Playwright 1.66.0-alpha-2026-11-09、Chromium revision 1254。
+
+| 检查 | 证据与结果 |
+| --- | --- |
+| 全新克隆中的自动化测试 | `python3 -m unittest discover -s tests -v`：21 项通过，包含旧安装登记、旧备份恢复、冲突保护、路径含空格、相对浏览器路径 |
+| 首次网络部署 | `workflow/bootstrap.py --codex-home … --bin-dir …`：npm ci 下载 3 个锁定包，下载 Chromium / FFmpeg，14 个技能和 profile 安装成功，两层静态检查通过 |
+| 重复更新 | `bootstrap.py --skip-deps --update`：通过，baseline 报 already_configured |
+| 实际回退与卸载 | 在同一临时安装上恢复首装备份并卸载 Workstyle：配置、14 个受管技能链接与 launcher 移除，Codex 自带 `.system` 技能保留 |
+| 普通 Codex | `baseline/check.py --codex-home … --mcp --codex`：全局约定加载、9 个技能发现通过，无模型推理请求 |
+| 浏览器 | 实际启动新下载的 Chromium；MCP 本地页面导航、按钮操作与结果检查通过，发现 25 个工具 |
+| HTTP MCP | Context7 解析 Requests 并取得 timeout 文档；DeepWiki 读取 psf/requests 目录，均通过 |
+| Workstyle profile 与技能清单 | `debug prompt-input` 确认 profile 指令与 3 个默认技能；App Server `skills/list` 确认 5 个工作流技能全部 enabled 且无加载错误，无模型推理请求 |
+| 独立审查 | 核实并处理受管设置覆盖、相对路径、分阶段结果说明、旧登记保护与旧备份状态清理；最终针对性复核通过 |
+| Git 内容 | 依赖、私人配置、凭据、课程及任务记录由忽略规则排除；自有文件空白检查通过。上游文献技能的既有空白格式原样保留 |
+
+首次在受限沙盒下载时 npm DNS 报 EAI_AGAIN；在允许网络的执行环境重试后完成下载与上述验收。这是本机上隔离克隆与配置目录的验证，**未在另一台物理机器、macOS 或 Windows 运行**。系统库沿用当前 Linux 环境，`--with-system-deps` 未执行。GitHub Actions 配置已加入仓库，尚未提交远端运行；未测试真实模型任务的质量提升。
+
+复查命令和环境前置条件见 [快速开始](../QUICKSTART.md)。即时原始报告保存在本次本地任务记录旁，不含登录信息，不纳入版本控制。
+
+teach / retro 保留 `allow_implicit_invocation: false`，按 [官方技能说明](https://learn.chatgpt.com/docs/build-skills#optional-metadata)使用显式调用；默认 prompt 清单不展示它们。CLI 0.167.2 的 `debug prompt-input` 在本次文本提示实验中也没有注入这两项正文，因此用实际 `skills/list` 检查安装发现状态，没有把目录列表或默认 prompt 当作教学任务已运行的证据。
+
+## 2026 年 11 月 16 日：原始安装记录
+
 核验日期：2026 年 11 月 16 日。
 
 | 检查 | 实际结果 |

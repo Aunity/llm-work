@@ -38,6 +38,8 @@ git diff --check
 
 用功能分支修改，检查通过后提交；其他机器拉取同一版本后运行 `python3 workflow/bootstrap.py --update`。详细约定见 [维护指南](CONTRIBUTING.md)，第三方内容见 [来源与许可证](THIRD_PARTY_NOTICES.md)。
 
+本次 Linux 上的全新克隆部署、21 项测试和真实 MCP 操作结果见 [验收记录](workflow/VALIDATION.md)，其中注明实际验证与未验证范围。
+
 ## 背景材料
 
 以下调研的资料核对日期为 **2026 年 11 月 16 日**，保留为当时的研究和安装记录；当前部署方式以快速开始为准。
