@@ -31,7 +31,7 @@ codex-work
 在准备好 Python、Node.js 和 Codex 的 Linux / WSL2 环境中：
 
 ```bash
-git clone YOUR_REPOSITORY_URL workstyle
+git clone https://github.com/Aunity/llm-work.git workstyle
 cd workstyle
 python3 workflow/bootstrap.py
 export PATH="$HOME/.local/bin:$PATH"

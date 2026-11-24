@@ -34,10 +34,10 @@ codex-work doctor --mcp
 
 ## 远端与稳定版本
 
-首次选择远端平台和仓库可见性后，连接自己的空仓库：
+本仓库的远端为 `https://github.com/Aunity/llm-work.git`。已有本地仓库且尚未配置远端时：
 
 ```bash
-git remote add origin YOUR_REPOSITORY_URL
+git remote add origin https://github.com/Aunity/llm-work.git
 git push -u origin main
 ```
 
@@ -47,4 +47,6 @@ git push -u origin main
 
 `.gitignore` 排除依赖、虚拟环境、任务记录、即时检查报告、个人课程、凭据和本地 Codex 配置。只提交可重用源码、模板、锁文件、说明及去除私密信息的验证结论。`git status` 和 `git diff --cached` 是每次提交前的检查入口。
 
-本仓库自有内容尚未声明统一开源许可证；发布公开仓库前由维护者决定授权方式。第三方内容仍遵循各自随附的许可证，见 [第三方说明](THIRD_PARTY_NOTICES.md)。
+公开提交使用 GitHub 隐私邮箱。发布前检查拟推送分支的完整历史与提交身份；忽略规则不会移除已经提交的内容。需要脱敏时在隔离副本操作，原始 Git bundle 和审计明细留在忽略的本地目录；仅推送经过检查的分支。
+
+本仓库自有内容尚未声明统一开源许可证，本次发布不新增授权条款。第三方内容仍遵循各自随附的许可证，见 [第三方说明](THIRD_PARTY_NOTICES.md)。

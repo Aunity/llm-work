@@ -10,16 +10,22 @@ venv/
 .DS_Store
 
 # Local sessions, machine configuration and credentials.
-/.workstyle/
-/.codex/
-/.agents/
-/.aws/
+.workstyle/
+.codex/
+.agents/
+.aws/
+.ssh/
+.git-credentials
+.netrc
 .env
 .env.*
 !.env.example
 auth.json
 *.pem
 *.key
+*.p12
+*.pfx
+*.bundle
 
 # Teaching output belongs in a separate personal workspace.
 /learning/*

@@ -19,14 +19,14 @@ Python 3.10 需要 `tomli`。在自己的 Python 环境安装 `python3 -m pip in
 ## 首次部署
 
 ```bash
-git clone YOUR_REPOSITORY_URL workstyle
+git clone https://github.com/Aunity/llm-work.git workstyle
 cd workstyle
 python3 workflow/bootstrap.py
 export PATH="$HOME/.local/bin:$PATH"
 codex-work doctor
 ```
 
-用真实地址替换 `YOUR_REPOSITORY_URL`。将 PATH 设置加入自己的 shell 配置，后续新终端即可找到命令。自定义安装目录则将相应 `--bin-dir` 加入 PATH。
+将 PATH 设置加入自己的 shell 配置，后续新终端即可找到命令。自定义安装目录则将相应 `--bin-dir` 加入 PATH。
 
 部署入口依次执行：按锁文件 `npm ci`，安装对应版本 Chromium，生成 Workstyle profile 和 5 个技能链接，应用普通 Codex 的 9 个技能与基础配置，最后执行静态检查。默认不安装浏览器系统库；精简 Linux 缺少系统库时，可显式运行：
 
