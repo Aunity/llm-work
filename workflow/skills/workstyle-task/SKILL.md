@@ -1,6 +1,6 @@
 ---
 name: workstyle-task
-description: Maintain and resume evidence-backed task state when the Workstyle profile is selected or a user asks to continue a Workstyle task. Supports multi-step implementation, investigation, and scientific work across sessions.
+description: Maintain and resume evidence-backed task state when Workstyle is selected or a user asks to continue a Workstyle task. Supports multi-step implementation, investigation, and scientific work across CLI tools and sessions.
 ---
 
 # Workstyle task
@@ -55,7 +55,7 @@ negative finding can be a valid outcome of exploration.
 Use `complete` only when the requested deliverables and verification are done.
 For unfinished work record the next action and use `in_progress`, `blocked` or
 `paused` as appropriate; use paused only at the user's request. These are task
-record states, not Codex Goal API calls.
+record states, not calls to a host's goal API.
 
 End with a screen-readable result, evidence, limitations and next action if needed.
 Saving a document does not replace explaining its important content in chat.

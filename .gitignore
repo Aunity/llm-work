@@ -12,6 +12,9 @@ venv/
 # Local sessions, machine configuration and credentials.
 .workstyle/
 .codex/
+.claude/
+.claude.json
+.cursor/
 .agents/
 .aws/
 .ssh/

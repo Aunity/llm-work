@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import sys
 
+from harnesses import HARNESSES, executable, workstyle_home
+
 ROOT = Path(__file__).resolve().parent.parent
 BROWSER = ROOT / "workflow/browser"
 
@@ -19,22 +21,27 @@ def run(command, cwd=ROOT):
     subprocess.run([str(part) for part in command], cwd=cwd, check=True)
 
 
-def prerequisites():
+def prerequisites(harnesses):
     if sys.version_info < (3, 10):
         raise RuntimeError("Python 3.10 or newer is required")
     if sys.version_info < (3, 11) and importlib.util.find_spec("tomli") is None:
         raise RuntimeError("Python 3.10 needs tomli; install requirements.txt in your Python environment")
-    for name in ("node", "npm", "codex"):
+    for name in ("node", "npm"):
         if not shutil.which(name):
             raise RuntimeError(name + " is missing from PATH; see QUICKSTART.md")
     node = subprocess.check_output(["node", "--version"], text=True).strip()
     if int(node.lstrip("v").split(".")[0]) < 20:
         raise RuntimeError("Pinned Playwright requires Node >=20; found " + node)
-    codex = subprocess.check_output(["codex", "--version"], text=True).strip()
-    match = re.search(r"(\d+)\.(\d+)\.(\d+)", codex)
-    if not match or tuple(map(int, match.groups())) < (0, 134, 0):
-        raise RuntimeError("Separate profile files require Codex >=0.134.0; found " + codex)
-    print("Runtime:", sys.version.split()[0], node, codex, flush=True)
+    versions = []
+    for harness in harnesses:
+        binary = executable(harness, probe=harness != "codex")
+        version = subprocess.check_output([binary, "--version"], text=True, timeout=20).strip()
+        if harness == "codex":
+            match = re.search(r"(\d+)\.(\d+)\.(\d+)", version)
+            if not match or tuple(map(int, match.groups())) < (0, 134, 0):
+                raise RuntimeError("Separate profile files require Codex >=0.134.0; found " + version)
+        versions.append(harness + " " + version)
+    print("Runtime:", sys.version.split()[0], node, *versions, flush=True)
 
 
 def check_packages():
@@ -49,6 +56,9 @@ def check_packages():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--harness", choices=[*HARNESSES, "all"], default="codex",
+                        help="CLI to install (default: codex); all requires all three CLIs")
+    parser.add_argument("--workstyle-home", type=Path, default=workstyle_home())
     parser.add_argument("--codex-home", type=Path,
                         default=Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))))
     parser.add_argument("--bin-dir", type=Path, default=Path.home() / ".local/bin")
@@ -63,7 +73,8 @@ def main():
         parser.error("--skip-deps and --with-system-deps cannot be combined")
     if args.browser_executable and args.with_system_deps:
         parser.error("install OS libraries for a custom browser separately")
-    prerequisites()
+    harnesses = list(HARNESSES) if args.harness == "all" else [args.harness]
+    prerequisites(harnesses)
     home, bindir = args.codex_home.expanduser().resolve(), args.bin_dir.expanduser().resolve()
     if not args.skip_deps:
         run(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=BROWSER)
@@ -76,13 +87,21 @@ def main():
     common = ["--codex-home", home]
     update = ["--update"] if args.update else []
     browser = ["--browser-executable", args.browser_executable.expanduser().resolve()] if args.browser_executable else []
-    run([sys.executable, ROOT / "workflow/install.py", *common, "--bin-dir", bindir, *update, *browser])
-    if not args.workflow_only:
-        run([sys.executable, ROOT / "baseline/apply.py", *common, *update])
-    run([sys.executable, ROOT / "workflow/check.py", *common, *(["--mcp"] if args.mcp else [])])
-    if not args.workflow_only:
-        run([sys.executable, ROOT / "baseline/check.py", *common, *(["--mcp"] if args.mcp else [])])
-    print("Installed and checked. Add", bindir, "to PATH and start a new Codex session.")
+    for harness in harnesses:
+        adapter = [sys.executable, ROOT / "workflow/adapter_install.py", "--harness", harness,
+                   "--workstyle-home", args.workstyle_home.expanduser().absolute(), "--bin-dir", bindir]
+        if harness == "codex":
+            run([sys.executable, ROOT / "workflow/install.py", *common, "--bin-dir", bindir, *update, *browser])
+            if not args.workflow_only:
+                run([sys.executable, ROOT / "baseline/apply.py", *common, *update])
+            run([sys.executable, ROOT / "workflow/check.py", *common, *(["--mcp"] if args.mcp else [])])
+            if not args.workflow_only:
+                run([sys.executable, ROOT / "baseline/check.py", *common, *(["--mcp"] if args.mcp else [])])
+            run([*adapter, *update])
+        else:
+            run([*adapter, *update, *browser, *(["--workflow-only"] if args.workflow_only else [])])
+            run([*adapter, "--check", *(["--mcp"] if args.mcp else [])])
+    print("Installed and checked. Add", bindir, "to PATH, then run workstyle in your project directory.")
     return 0
 
 

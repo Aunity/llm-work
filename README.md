@@ -1,6 +1,8 @@
-# Workstyle：可迭代的 Codex 工作与学习配置
+# Workstyle：跨终端 AI 工具的工作与学习流程
 
-这个项目从 Codex 工作方法调研发展而来，用于维护一套可检查、可更新、可迁移的个人配置。目标是提高复杂任务的思考、执行、验证和完成质量，支持跨会话恢复、科研与学习。Token 消耗不作为筛选标准。
+在 Codex CLI、Claude Code 和 Cursor Agent CLI 之间复用工作规则、技能和项目任务记录。进入项目文件夹，运行 `workstyle`，即可先了解目录、再安排工作；工具可以切换，项目进度保留在文件里。
+
+项目起源于 Codex 工作方法调研，目标是提高复杂任务的思考、执行、验证和完成质量，支持跨会话恢复、科研与学习。Token 消耗不作为筛选标准。
 
 ## 项目组成
 
@@ -8,37 +10,45 @@
 | --- | --- |
 | `docs/` | 工作方法、技能与 MCP 调研、社区证据和效果评估方案 |
 | `baseline/` | 普通 Codex 的 9 个精选 skills、个人约定、Context7 / DeepWiki / Playwright 配置、备份与回退 |
-| `workflow/` | Workstyle profile、5 个工作流 skills、依赖锁定、部署与检查 |
-| `bin/codex-work` | 统一日常入口，默认打开当前目录，支持恢复会话、任务、学习与复盘 |
+| `workflow/` | 共享核心规则、5 个工作流 skills、CLI 适配、依赖锁定、部署与检查 |
+| `bin/workstyle` | 统一日常入口，默认当前目录，记住所选 CLI |
+| `bin/codex-work` | 兼容旧命令，始终使用 Codex |
 | `tests/` | 不依赖个人配置或网络的安装、更新、回退和启动器测试 |
 | `learning/` | 学习入口说明；实际课程与个人记录不进入此仓库 |
 
-日常只使用 `codex-work`，它自动选择 Workstyle profile。每个项目文件夹就是一个工作目录；未指定目录时使用启动命令时所在的文件夹。技能通过符号链接指向本仓库，配置中的机器路径在安装时生成，因此安装后需要保留克隆目录。
+每个项目文件夹就是一个工作目录；未指定目录时使用启动命令时所在的文件夹。Codex 通过 profile 和技能链接接入；Claude Code / Cursor Agent 通过会话级本地插件接入。安装后需要保留克隆目录，机器路径由安装器解析。
 
 ## 日常使用
 
 ```bash
 cd /path/to/project
-codex-work
+workstyle
 ```
 
 启动后会自动只读查看当前目录：空目录提示你安排新任务；已有项目先读取说明、进展与交接材料，结合当前文件给出背景摘要和下一步选择。这个阶段不创建任务记录或课程，也不自动执行旧待办。接着直接说明要做的事即可。
 
-恢复这个项目的原对话用 `codex-work resume`；从其他位置打开项目用 `codex-work -C /path/to/project`。启动规则集中维护在 [项目交接指令](workflow/startup.md)。
+选择常用工具一次，之后继续用 `workstyle`：
+
+```bash
+workstyle use claude     # 或 codex、cursor
+workstyle               # 在当前项目开始
+```
+
+临时切换用 `workstyle --harness cursor`，不改变默认选择。`workstyle continue` 读取当前项目 `.workstyle/tasks/` 接续工作；`workstyle resume` 恢复所选 CLI 自己的原对话。指定目录用 `workstyle -C /path/to/project`。启动规则集中维护在 [项目交接指令](workflow/startup.md)。
 
 ## 新机器部署
 
-在准备好 Python、Node.js 和 Codex 的 Linux / WSL2 环境中：
+在准备好 Python、Node.js 和所选 CLI 的 Linux / WSL2 环境中：
 
 ```bash
 git clone https://github.com/Aunity/llm-work.git workstyle
 cd workstyle
-python3 workflow/bootstrap.py
+python3 workflow/bootstrap.py --harness claude
 export PATH="$HOME/.local/bin:$PATH"
-codex-work -C /path/to/project
+workstyle -C /path/to/project
 ```
 
-前置版本、Python 3.10 的依赖、浏览器系统库、只安装 Workstyle、更新与回退均见 [快速开始](QUICKSTART.md)。安装器不复制登录信息、API key 或旧机器的个人模型配置。
+`--harness` 可选 `codex`、`claude`、`cursor`、`all`；省略时保持原来的 Codex 安装方式。只安装所选工具的适配，不要求机器上同时装三种 CLI。版本与适配边界见 [CLI 接入说明](workflow/HARNESSES.md)，部署、更新与回退见 [快速开始](QUICKSTART.md)。登录和模型配置由各 CLI 自己管理。
 
 ## 持续迭代
 
@@ -47,7 +57,7 @@ python3 -m unittest discover -s tests -v
 git diff --check
 ```
 
-用功能分支修改，检查通过后提交；其他机器拉取同一版本后运行 `python3 workflow/bootstrap.py --update`。详细约定见 [维护指南](CONTRIBUTING.md)，第三方内容见 [来源与许可证](THIRD_PARTY_NOTICES.md)。
+用功能分支修改，检查通过后提交；其他机器拉取同一版本后运行 `python3 workflow/bootstrap.py --harness claude --update`（替换为所用 CLI）。详细约定见 [维护指南](CONTRIBUTING.md)，第三方内容见 [来源与许可证](THIRD_PARTY_NOTICES.md)。
 
 本次 Linux 上的全新克隆部署、自动化测试和真实 MCP 操作结果见 [验收记录](workflow/VALIDATION.md)，其中注明实际验证与未验证范围。
 

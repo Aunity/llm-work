@@ -6,7 +6,7 @@
 
 涉及库或 API 行为时，确认项目实际版本；需要查证时优先用 Context7 和原始文档。DeepWiki 可用于了解公开仓库，关键实现结论回到相应版本源码核对。
 
-根据任务选择相关 skills。将上游技能提到的 Skill、Read、Bash、Agent 等名称映射为当前 Codex 实际可用的技能加载、文件、命令和子代理工具。技能内的 scripts、references 路径相对于该 SKILL.md 所在目录解析，项目输出写在目标项目。
+根据任务选择相关 skills。将上游技能提到的 Skill、Read、Bash、Agent 等名称映射为当前工具实际可用的技能加载、文件、命令和子代理工具。技能内的 scripts、references 路径相对于该 SKILL.md 所在目录解析，项目输出写在目标项目。
 
 代码审查优先使用项目现有 tracker 说明、用户指定的需求、设计文件和本地规格；独立审查不以另装 tracker setup skill 为前提。需要比较点或关键业务信息时再澄清。
 

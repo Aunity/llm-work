@@ -47,7 +47,8 @@ def profile_text(browser_executable=None):
     if not browser_executable.is_file() or not os.access(browser_executable, os.X_OK):
         raise RuntimeError("Chromium is missing or not executable; run python3 workflow/bootstrap.py")
     text = (ROOT / "workflow/profile.template.toml").read_text()
-    for key, value in {"NODE": node, "BROWSER_CLI": str(cli), "CHROME": str(browser_executable)}.items():
+    for key, value in {"NODE": node, "BROWSER_CLI": str(cli), "CHROME": str(browser_executable),
+                       "CORE": (ROOT / "workflow/core.md").read_text(encoding="utf-8")}.items():
         text = text.replace("@" + key + "@", json.dumps(value))
     return text.replace("@SOURCE@", str(ROOT / "workflow/profile.template.toml"))
 

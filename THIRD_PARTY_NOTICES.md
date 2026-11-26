@@ -11,3 +11,5 @@
 | Playwright MCP 与传递依赖 | npm 包和版本见 `workflow/browser/package-lock.json`，部署时下载 | 各 npm 包随附的 LICENSE / NOTICE |
 
 本说明不改变上游的授权条件，也不为项目自有内容指定开源许可证。
+
+Claude Code / Cursor Agent 的本地插件由安装器从这些固定文件生成，连同参考文件和许可证一并复制。`teach` / `retro` 的显式调用字段只在生成副本中恢复，适配记录见 `workflow/sources.json`；不将账号配置或运行缓存打包。

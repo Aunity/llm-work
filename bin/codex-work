@@ -1,89 +1,11 @@
 #!/usr/bin/env python3
-"""Open Workstyle and orient in the current project; no subcommand is needed."""
-import argparse
-import json
-import os
+"""Compatibility entry point: always select Codex with the original syntax."""
 from pathlib import Path
-import shutil
-import subprocess
 import sys
 
-ROOT = Path(__file__).resolve().parent.parent
-PROMPTS = {
-    "work": "Use $workstyle-task for this task. Investigate, implement, verify and deliver the requested outcome.",
-    "continue": "Use $workstyle-task to recover the requested unfinished task from this project's .workstyle/tasks/ and continue it.",
-    "learn": "Use $teach in this teaching workspace. Ground the lesson in reliable sources and include a learner exercise and a transfer check.",
-    "retro": "Use $retro and its $writing-for-agents reference to inspect this project's relevant task evidence and session. Map upstream tool names to the actual Codex tools available here. Present concrete environment improvements with supporting evidence.",
-}
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", nargs="?", default="work", choices=[*PROMPTS, "resume", "doctor"],
-                        help="default: work; resume reopens a conversation, continue recovers a task record")
-    parser.add_argument("project", nargs="?", help="legacy positional project directory")
-    parser.add_argument("request", nargs="?", help="legacy positional task or learning topic")
-    parser.add_argument("-C", "--project", dest="project_dir", metavar="DIR",
-                        help="project directory (default: current directory)")
-    parser.add_argument("--request", dest="request_text", metavar="TEXT",
-                        help="optional task or learning topic to send on launch")
-    parser.add_argument("--last", action="store_true", help="resume: reopen the most recent conversation in this project")
-    parser.add_argument("--dry-run", action="store_true", help="print launch arguments without starting Codex")
-    parser.add_argument("--mcp", action="store_true", help="doctor: exercise both MCP services")
-    args = parser.parse_args()
-    if args.project_dir is not None and args.project is not None:
-        parser.error("choose either -C/--project or the legacy project argument")
-    if args.request_text is not None and args.request is not None:
-        parser.error("choose either --request or the legacy request argument")
-    request = args.request_text if args.request_text is not None else args.request
-    if args.last and args.mode != "resume":
-        parser.error("--last is only supported in resume mode")
-    if args.mcp and args.mode != "doctor":
-        parser.error("--mcp is only supported in doctor mode")
-    if request is not None and args.mode in {"resume", "doctor"}:
-        parser.error("requests are not supported in " + args.mode + " mode")
-    project_dir = args.project_dir if args.project_dir is not None else args.project
-    project = Path(project_dir if project_dir is not None else ".").expanduser().resolve()
-    if not project.is_dir():
-        parser.error("project must be an existing directory")
-    if args.mode == "doctor":
-        command = [sys.executable, str(ROOT / "workflow/check.py")]
-        if args.mcp:
-            command.append("--mcp")
-        if args.dry_run:
-            print(json.dumps(command, ensure_ascii=False, indent=2))
-            return 0
-        return subprocess.call(command)
-    codex = shutil.which("codex")
-    if not codex:
-        parser.error("codex is not on PATH")
-    argv = [codex, "--profile", "workstyle", "--cd", str(project)]
-    if args.mode == "resume":
-        argv.append("resume")
-        if args.last:
-            argv.append("--last")
-    elif request or args.mode in {"continue", "retro"}:
-        prompt = PROMPTS[args.mode]
-        if request:
-            prompt += "\n\nUser request:\n" + request
-        argv.append(prompt)
-    else:
-        startup = ROOT / "workflow/startup.md"
-        try:
-            instructions = startup.read_text(encoding="utf-8")
-        except OSError as error:
-            parser.error("cannot load startup instructions from " + str(startup) + ": " + str(error))
-        name = json.dumps(project.name or str(project), ensure_ascii=False)
-        location = json.dumps(str(project), ensure_ascii=False)
-        argv.append("项目接手：" + name + "\n项目目录：" + location + "\n\n" + instructions)
-    if args.dry_run:
-        print(json.dumps(argv, ensure_ascii=False, indent=2))
-        return 0
-    profile = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "workstyle.config.toml"
-    if not profile.is_file():
-        parser.error("Workstyle is not installed. Run python3 workflow/install.py from " + str(ROOT))
-    os.execv(codex, argv)
-
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "workflow"))
+from launcher import main
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(forced_harness="codex"))

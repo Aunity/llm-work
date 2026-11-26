@@ -32,5 +32,11 @@ def checkout(directory):
             destination.mkdir(parents=True, exist_ok=True)
             (destination / "package.json").write_text(json.dumps({"version": package["version"]}))
     (browser / "node_modules/@playwright/mcp/cli.js").touch()
-    env = {**os.environ, "PATH": str(runtime) + os.pathsep + os.environ["PATH"]}
+    for name, banner in (("claude", "Claude Code"), ("cursor-agent", "Cursor Agent")):
+        binary = runtime / name
+        binary.write_text("#!/usr/bin/env python3\nimport sys\nprint(" + repr(
+            banner + " --plugin-dir --append-system-prompt --workspace --resume --continue") + ")\n")
+        binary.chmod(0o755)
+    env = {**os.environ, "PATH": str(runtime) + os.pathsep + os.environ["PATH"],
+           "WORKSTYLE_HOME": str(Path(directory) / "workstyle home")}
     return root, env

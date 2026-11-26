@@ -94,13 +94,15 @@ class LauncherTests(unittest.TestCase):
         (checkout / "bin").mkdir(parents=True)
         copied = checkout / "bin/codex-work"
         shutil.copy2(ROOT / "bin/codex-work", copied)
+        (checkout / "workflow").mkdir()
+        for name in ("launcher.py", "harnesses.py"):
+            shutil.copy2(ROOT / "workflow" / name, checkout / "workflow" / name)
         self.launcher.unlink()
         self.launcher.symlink_to(copied)
         missing = self.launch(check=False)
         self.assertEqual(missing.returncode, 2)
         self.assertEqual(missing.stdout, "")
         self.assertIn("cannot load startup instructions", missing.stderr)
-        (checkout / "workflow").mkdir()
         (checkout / "workflow/startup.md").write_text("This checkout's startup instructions.\n")
         actual = json.loads(self.launch().stdout)
         self.assert_startup(actual, self.project)

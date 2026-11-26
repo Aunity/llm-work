@@ -14,9 +14,9 @@ git add 指定的文件
 git commit -m "说明具体改变"
 ```
 
-保持 `main` 可部署。安装器测试覆盖首次安装、重复执行、路径含空格、缺少依赖、用户文件冲突、受保护更新与备份恢复；新增行为沿用 Python unittest。不要让测试写入真实用户的 Codex 配置。GitHub Actions 在 Python 3.10 与 3.12 上执行相同检查，网络 MCP 测试留给允许联网的部署环境。
+保持 `main` 可部署。安装器测试覆盖首次安装、重复执行、路径含空格、缺少依赖、用户文件冲突、受保护更新与备份恢复；新增行为沿用 Python unittest。测试使用临时 `WORKSTYLE_HOME`、Codex home 和 bin，不写入真实用户配置。GitHub Actions 在 Python 3.10 与 3.12 上执行相同检查，网络 MCP 测试留给允许联网的部署环境。
 
-在需要验证真实部署时使用仓库外的临时 Codex home / bin 目录，运行 `workflow/bootstrap.py` 和带 `--codex-home` 的检查器。准备发布的版本还应在目标 OS 上检查浏览器启动、MCP 与新 Codex 会话的技能发现。
+真实部署验证使用仓库外的临时 Workstyle home / Codex home / bin，运行带 `--harness` 的 `workflow/bootstrap.py`。发布前检查目标 CLI 的插件或技能发现，以及浏览器和 MCP 行为；保留原生权限和项目规则。通用规则只在 `workflow/core.md` 维护，CLI 参数与生成格式分别在 `harnesses.py`、`launcher.py` 和 `adapter_install.py`；接口依据见 [CLI 接入说明](workflow/HARNESSES.md)。
 
 ## 更新第三方内容
 

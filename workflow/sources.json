@@ -30,5 +30,10 @@
     "url": "https://mcp.deepwiki.com/mcp",
     "documentation": "https://docs.devin.ai/work-with-devin/deepwiki-mcp"
   },
-  "local_skill": "workflow/skills/workstyle-task"
+  "local_skill": "workflow/skills/workstyle-task",
+  "adapter_generation": {
+    "implementation": "workflow/adapter_install.py",
+    "harnesses": ["claude", "cursor"],
+    "modifications": "Generated teach/retro copies restore disable-model-invocation: true from the existing openai.yaml explicit-invocation policy. Vendored source bodies, references and licenses are retained unchanged."
+  }
 }
