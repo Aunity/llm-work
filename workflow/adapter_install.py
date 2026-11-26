@@ -134,8 +134,12 @@ def install_adapter(home, harness, bindir, rendered=None, update=False, uninstal
             if path.exists() and not path.is_dir():
                 raise RuntimeError("Installation directory is blocked by a file: " + str(path))
     state = owned_state(home, harness)
-    link = bindir / "workstyle"
-    source = ROOT / "bin/workstyle"
+    link = bindir / "llm-work"
+    source = ROOT / "bin/llm-work"
+    legacy_link = bindir / "workstyle"
+    legacy_source = ROOT / "bin/workstyle"
+    legacy_target = (os.readlink(legacy_link) if legacy_link.is_symlink()
+                     and legacy_link.resolve() == legacy_source.resolve() else None)
     if os.path.lexists(link) and not (link.is_symlink() and link.resolve() == source.resolve()):
         raise RuntimeError("Existing launcher left untouched: " + str(link))
     if state and state["bin_dir"] != str(bindir):
@@ -152,7 +156,7 @@ def install_adapter(home, harness, bindir, rendered=None, update=False, uninstal
         # Move the complete snapshot out of service before removing metadata.
         # A recursive delete could destroy half a bundle before failing.
         backup = None
-        state_removed = link_removed = False
+        state_removed = link_removed = legacy_removed = False
         previous_state = state_path.read_bytes() if state else None
         try:
             if current is not None:
@@ -165,9 +169,13 @@ def install_adapter(home, harness, bindir, rendered=None, update=False, uninstal
             if state:
                 state_path.unlink()
                 state_removed = True
-            if not any(item.get("bin_dir") == str(bindir) for item in others) and link.is_symlink():
-                link.unlink()
-                link_removed = True
+            if not any(item.get("bin_dir") == str(bindir) for item in others):
+                if link.is_symlink():
+                    link.unlink()
+                    link_removed = True
+                if legacy_target is not None:
+                    legacy_link.unlink()
+                    legacy_removed = True
         except (OSError, RuntimeError, ValueError):
             if backup:
                 backup.rename(bundle)
@@ -175,6 +183,8 @@ def install_adapter(home, harness, bindir, rendered=None, update=False, uninstal
                 atomic_write(state_path, previous_state)
             if link_removed:
                 link.symlink_to(source)
+            if legacy_removed:
+                legacy_link.symlink_to(legacy_target)
             raise
         if backup:
             print("Uninstalled plugin backup:", backup)
@@ -183,7 +193,7 @@ def install_adapter(home, harness, bindir, rendered=None, update=False, uninstal
     home.mkdir(parents=True, exist_ok=True, mode=0o700)
     (home / "installs").mkdir(exist_ok=True)
     previous_state = state_path.read_bytes() if state_path.exists() else None
-    link_created = state_written = settings_created = bundle_changed = False
+    link_created = state_written = settings_created = bundle_changed = legacy_removed = False
     backup = None
     try:
         if rendered is not None and current != rendered:
@@ -214,6 +224,9 @@ def install_adapter(home, harness, bindir, rendered=None, update=False, uninstal
         atomic_write(state_path, json_bytes({"root": str(ROOT), "harness": harness, "bin_dir": str(bindir),
                                            "files": fingerprints(rendered or {})}))
         state_written = True
+        if legacy_target is not None:
+            legacy_link.unlink()
+            legacy_removed = True
     except (OSError, RuntimeError, ValueError):
         if bundle_changed:
             shutil.rmtree(bundle)
@@ -228,10 +241,12 @@ def install_adapter(home, harness, bindir, rendered=None, update=False, uninstal
                 state_path.unlink()
             else:
                 atomic_write(state_path, previous_state)
+        if legacy_removed:
+            legacy_link.symlink_to(legacy_target)
         raise
     if backup:
         print("Plugin backup:", backup)
-    print("Ready:", harness, "— run workstyle (or workstyle --harness " + harness + ")")
+    print("Ready:", harness, "— run llm-work (or llm-work --harness " + harness + ")")
 
 
 def check_adapter(home, harness, mcp=False):
@@ -243,7 +258,7 @@ def check_adapter(home, harness, mcp=False):
         subprocess.run([binary, "plugin", "validate", str(bundle)], check=True, timeout=30)
     if mcp:
         if harness == "codex":
-            raise RuntimeError("Use workstyle --harness codex doctor --mcp for Codex")
+            raise RuntimeError("Use llm-work --harness codex doctor --mcp for Codex")
         from check import check_browser, check_deepwiki
         servers = load_json(bundle / (".mcp.json" if harness == "claude" else "mcp.json"))["mcpServers"]
         for name, checker in (("workstyle_deepwiki", check_deepwiki), ("workstyle_browser", check_browser)):

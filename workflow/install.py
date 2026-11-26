@@ -120,7 +120,7 @@ def main():
     if previous != rendered:
         atomic_write(profile, rendered)
     atomic_write(state_path, (json.dumps({"root": str(ROOT), "profile_sha256": digest(rendered)}, indent=2) + "\n").encode())
-    print("Ready: run codex-work in your project directory (or codex-work -C /path/to/project)")
+    print("Codex profile ready. The bootstrap installer provides the llm-work command.")
     return 0
 
 

@@ -35,7 +35,7 @@ def load_json(path):
 def selected_harness(home):
     name = load_json(home / "settings.json").get("harness", "codex")
     if not isinstance(name, str) or name not in HARNESSES:
-        raise RuntimeError("Unknown saved harness; select one with workstyle use codex|claude|cursor")
+        raise RuntimeError("Unknown saved harness; select one with llm-work use codex|claude|cursor")
     return name
 
 

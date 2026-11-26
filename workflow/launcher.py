@@ -1,4 +1,4 @@
-"""Open Workstyle in the current project, using the selected terminal CLI."""
+"""Open llm-work in the current project, using the selected terminal CLI."""
 import argparse
 import json
 import os
@@ -66,7 +66,7 @@ def main(forced_harness=None):
         if args.mode == "use":
             if (args.project not in HARNESSES or args.request is not None or args.project_dir is not None
                     or args.request_text is not None or args.last or args.mcp or args.harness):
-                parser.error("usage: workstyle use codex|claude|cursor [--dry-run]")
+                parser.error("usage: llm-work use codex|claude|cursor [--dry-run]")
             if args.dry_run:
                 print(json.dumps({"harness": args.project, "settings": str(home / "settings.json")}, ensure_ascii=False))
                 return 0
@@ -74,7 +74,7 @@ def main(forced_harness=None):
             ensure_installed(args.project, home)
             from adapter_install import save_selection
             save_selection(home, args.project)
-            print("Default CLI:", args.project, "— run workstyle in your project directory.")
+            print("Default CLI:", args.project, "— run llm-work in your project directory.")
             return 0
         if args.project is not None and args.project_dir is not None:
             parser.error("use either -C/--project or the legacy positional project, not both")

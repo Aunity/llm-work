@@ -101,7 +101,7 @@ def main():
         else:
             run([*adapter, *update, *browser, *(["--workflow-only"] if args.workflow_only else [])])
             run([*adapter, "--check", *(["--mcp"] if args.mcp else [])])
-    print("Installed and checked. Add", bindir, "to PATH, then run workstyle in your project directory.")
+    print("Installed and checked. Add", bindir, "to PATH, then run llm-work in your project directory.")
     return 0
 
 

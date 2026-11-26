@@ -1,18 +1,18 @@
 # 终端 CLI 接入
 
-Workstyle 共享项目工作方式，CLI 自己负责模型、登录、权限审批与原生会话。
+LLM Work 共享项目工作方式，CLI 自己负责模型、登录、权限审批与原生会话。
 目前接入 Codex CLI、Claude Code 和 Cursor Agent CLI；Cursor 桌面 IDE 不在本轮范围内。
 
 ## 使用与边界
 
 ```bash
-workstyle use claude             # 记住默认工具，可选 codex / claude / cursor
+llm-work use claude             # 记住默认工具，可选 codex / claude / cursor
 cd /path/to/project
-workstyle                       # 只读了解当前目录并交接
-workstyle --harness cursor       # 仅本次切换
-workstyle continue              # 新会话读取项目任务记录
-workstyle resume                # 当前工具的历史选择器
-workstyle resume --last          # 当前工具在此项目的最近对话
+llm-work                       # 只读了解当前目录并交接
+llm-work --harness cursor       # 仅本次切换
+llm-work continue              # 新会话读取项目任务记录
+llm-work resume                # 当前工具的历史选择器
+llm-work resume --last          # 当前工具在此项目的最近对话
 ```
 
 工具之间可以读取同一份项目文件和 `.workstyle/tasks/`，原生聊天历史分别保存。
@@ -40,7 +40,7 @@ Claude / Cursor 插件带有 DeepWiki 与锁定版本的隔离 Playwright MCP。
 默认 `WORKSTYLE_HOME=~/.local/share/workstyle`：
 
 ```text
-settings.json             # 默认 CLI，workstyle use 修改
+settings.json             # 默认 CLI，llm-work use 修改
 installs/<cli>.json        # 源仓库、bin 目录、受管插件逐文件哈希与权限
 plugins/claude/            # Claude 原生插件快照
 plugins/cursor/            # Cursor 原生插件快照
@@ -49,9 +49,10 @@ backups/                  # 更新前的插件副本
 
 插件在安装时生成。修改仓库后运行所选 CLI 的 `bootstrap.py --update` 再开新会话。
 安装器保护同名文件、其他克隆的安装、本地修改和符号链接；遇到冲突先停下，保留现有文件。
-共享 `workstyle` 链接由安装记录管理，卸载一种适配时仍为其他已登记的 CLI 保留。
+共享 `llm-work` 链接由安装记录管理，卸载一种适配时仍为其他已登记的 CLI 保留。
+旧版受管 `workstyle` 链接在成功安装新入口后移除；最后一种适配卸载时也会清理本仓库遗留的旧链接。入口迁移失败会恢复原来的安装状态与链接，其他来源的同名文件保持原样。
 卸载将完整插件移入 `backups/` 后移除登记，避免删除中途失败损坏唯一副本。
-卸载保留默认选择，若默认工具已移除，执行 `workstyle use` 选择保留的工具。
+卸载保留默认选择，若默认工具已移除，执行 `llm-work use` 选择保留的工具。
 项目目录中的 `AGENTS.md`、`CLAUDE.md`、`.cursor/` 与 `.workstyle/tasks/` 不由安装器创建或修改。
 
 ## 版本依据与扩展

@@ -46,7 +46,7 @@ else:
                               env=self.env, capture_output=True, text=True, check=check)
 
     def launch(self, *flags, check=True, legacy=False):
-        script = self.root / "bin" / ("codex-work" if legacy else "workstyle")
+        script = self.root / "bin" / ("codex-work" if legacy else "llm-work")
         return subprocess.run([sys.executable, str(script), *map(str, flags)], cwd=self.project,
                               env=self.env, capture_output=True, text=True, check=check)
 
@@ -66,9 +66,9 @@ else:
         self.assertEqual(list(self.project.iterdir()), [])
         self.assertEqual(list(self.codex.iterdir()), [self.codex / "workstyle.config.toml"])
         self.install("claude", "--uninstall")
-        self.assertTrue((self.bindir / "workstyle").is_symlink())
+        self.assertTrue((self.bindir / "llm-work").is_symlink())
         self.install("cursor", "--uninstall")
-        self.assertFalse((self.bindir / "workstyle").exists())
+        self.assertFalse((self.bindir / "llm-work").exists())
         self.install("cursor", "--uninstall")
         self.install("cursor")
 
@@ -108,10 +108,101 @@ else:
 
     def test_foreign_launcher_is_preserved(self):
         self.bindir.mkdir()
-        (self.bindir / "workstyle").write_text("mine\n")
+        (self.bindir / "llm-work").write_text("mine\n")
         run = self.install("cursor", check=False)
         self.assertNotEqual(run.returncode, 0)
         self.assertFalse(self.home.exists())
+
+    def old_launcher(self):
+        link = self.bindir / "llm-work"
+        link.unlink()
+        legacy = self.bindir / "workstyle"
+        legacy.symlink_to(self.root / "bin/workstyle")
+        return legacy
+
+    def test_old_command_migrates_once_without_changing_selection_or_plugins(self):
+        self.install("claude")
+        self.install("cursor")
+        self.launch("use", "cursor")
+        before = self.snapshot(self.home)
+        legacy = self.old_launcher()
+        self.assertFalse(legacy.exists())  # Old target is absent after git pull.
+        self.install("claude")
+        self.assertFalse(os.path.lexists(legacy))
+        self.assertEqual(self.snapshot(self.home), before)
+        self.assertEqual((self.bindir / "llm-work").resolve(), self.root / "bin/llm-work")
+        run = subprocess.run([str(self.bindir / "llm-work"), "--dry-run"], cwd=self.project,
+                             env=self.env, capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(run.stdout)["harness"], "cursor")
+        self.install("cursor")
+        self.assertFalse(os.path.lexists(legacy))
+
+    def test_new_name_conflict_leaves_old_command_and_state_in_place(self):
+        self.install("claude")
+        legacy = self.old_launcher()
+        before = self.snapshot(self.home)
+        (self.bindir / "llm-work").write_text("personal command\n")
+        self.assertNotEqual(self.install("claude", check=False).returncode, 0)
+        self.assertTrue(legacy.is_symlink())
+        self.assertEqual((self.bindir / "llm-work").read_text(), "personal command\n")
+        self.assertEqual(self.snapshot(self.home), before)
+
+    def test_foreign_old_command_is_never_removed(self):
+        self.bindir.mkdir()
+        legacy = self.bindir / "workstyle"
+        legacy.write_text("personal command\n")
+        self.install("cursor")
+        self.install("cursor", "--uninstall")
+        self.assertEqual(legacy.read_text(), "personal command\n")
+        legacy.unlink()
+        external = self.base / "another checkout/bin/workstyle"
+        legacy.symlink_to(external)
+        self.install("cursor")
+        self.install("cursor", "--uninstall")
+        self.assertEqual(os.readlink(legacy), str(external))
+
+    def test_failed_legacy_link_removal_rolls_back_migration(self):
+        self.install("claude")
+        legacy = self.old_launcher()
+        before = self.snapshot(self.home)
+        program = '''
+from pathlib import Path
+from unittest.mock import patch
+import sys
+sys.path.insert(0, sys.argv[1])
+import adapter_install as adapter
+real_unlink = Path.unlink
+def fail_legacy(path, *args, **kwargs):
+    if path == Path(sys.argv[3]) / 'workstyle':
+        raise PermissionError('injected old launcher removal failure')
+    return real_unlink(path, *args, **kwargs)
+with patch.object(Path, 'unlink', fail_legacy):
+    try:
+        adapter.install_adapter(Path(sys.argv[2]), 'claude', Path(sys.argv[3]), adapter.render_plugin('claude'))
+    except PermissionError:
+        pass
+    else:
+        raise SystemExit('failure was not exercised')
+'''
+        subprocess.run([sys.executable, "-c", program, str(self.root / "workflow"), str(self.home), str(self.bindir)],
+                       env=self.env, check=True, capture_output=True)
+        self.assertTrue(legacy.is_symlink())
+        self.assertFalse(os.path.lexists(self.bindir / "llm-work"))
+        self.assertEqual(self.snapshot(self.home), before)
+        self.install("claude")
+        self.assertFalse(os.path.lexists(legacy))
+
+    def test_last_uninstall_removes_owned_new_and_old_commands(self):
+        self.install("claude")
+        self.install("cursor")
+        legacy = self.bindir / "workstyle"
+        legacy.symlink_to(self.root / "bin/workstyle")
+        self.install("claude", "--uninstall")
+        self.assertTrue((self.bindir / "llm-work").is_symlink())
+        self.assertTrue(legacy.is_symlink())
+        self.install("cursor", "--uninstall")
+        self.assertFalse(os.path.lexists(self.bindir / "llm-work"))
+        self.assertFalse(os.path.lexists(legacy))
 
     def test_file_instead_of_bin_directory_fails_before_any_installation(self):
         self.bindir.write_text("personal file\n")
@@ -172,7 +263,7 @@ with patch.object(adapter, 'atomic_write', fail_state):
         self.assertFalse((self.home / "plugins/claude").exists())
         self.assertFalse((self.home / "installs/claude.json").exists())
         self.assertFalse((self.home / "settings.json").exists())
-        self.assertFalse((self.bindir / "workstyle").exists())
+        self.assertFalse((self.bindir / "llm-work").exists())
         self.install("claude")
         bundle = self.home / "plugins/claude"
         before = self.snapshot(bundle)

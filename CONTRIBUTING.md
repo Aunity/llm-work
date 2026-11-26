@@ -27,7 +27,7 @@ git commit -m "说明具体改变"
 ```bash
 npm install --package-lock-only --ignore-scripts --prefix workflow/browser
 python3 workflow/bootstrap.py --update
-codex-work doctor --mcp
+llm-work --harness codex doctor --mcp
 ```
 
 同时更新 `workflow/sources.json` 与部署版本说明，核实 Node 要求和新的 Chromium 下载版本。不要手工编辑 `node_modules`。

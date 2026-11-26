@@ -1,4 +1,4 @@
-# Workstyle 部署与使用
+# LLM Work 部署与使用
 
 安装、检查与更新命令在本仓库根目录执行；日常使用在各自项目文件夹执行。克隆路径可任意选择；配置由当前路径生成，不绑定原作者机器。
 
@@ -19,11 +19,11 @@ Python 3.10 需要 `tomli`。在自己的 Python 环境安装 `python3 -m pip in
 ## 首次部署
 
 ```bash
-git clone https://github.com/Aunity/llm-work.git workstyle
-cd workstyle
+git clone https://github.com/Aunity/llm-work.git llm-work
+cd llm-work
 python3 workflow/bootstrap.py --harness claude
 export PATH="$HOME/.local/bin:$PATH"
-workstyle doctor
+llm-work doctor
 ```
 
 将 PATH 设置加入自己的 shell 配置，后续新终端即可找到命令。自定义安装目录则将相应 `--bin-dir` 加入 PATH。
@@ -51,7 +51,7 @@ python3 workflow/bootstrap.py --harness claude --skip-deps --workstyle-home /tmp
 python3 workflow/bootstrap.py --harness claude --skip-deps
 ```
 
-`--workstyle-home` 默认使用 `WORKSTYLE_HOME`，未设置时为 `~/.local/share/workstyle`；保存插件快照和默认 CLI。自定义试装后，运行时也要设置同值的 `WORKSTYLE_HOME`。第一次安装将该 CLI 设为默认值；后续安装不改变默认选择，用 `workstyle use codex|claude|cursor` 切换。
+`--workstyle-home` 默认使用 `WORKSTYLE_HOME`，未设置时为 `~/.local/share/workstyle`；保存插件快照和默认 CLI。自定义试装后，运行时也要设置同值的 `WORKSTYLE_HOME`。第一次安装将该 CLI 设为默认值；后续安装不改变默认选择，用 `llm-work use codex|claude|cursor` 切换。
 
 `--codex-home` 仅用于 Codex，默认使用现有 `CODEX_HOME`，未设置时为 `~/.codex`。自定义路径试装不会更换当前会话的配置；实际启动该副本时需把 Codex 的 `CODEX_HOME` 指向相同目录。
 
@@ -59,22 +59,22 @@ python3 workflow/bootstrap.py --harness claude --skip-deps
 
 ## 工作、学习与恢复
 
-日常只需记住 `workstyle`。进入项目文件夹后启动，它会先了解当前目录，再交给你安排任务：
+日常只需记住 `llm-work`。进入项目文件夹后启动，它会先了解当前目录，再交给你安排任务：
 
 ```bash
 cd /path/to/project
-workstyle
+llm-work
 ```
 
 | 场景 | 命令 |
 | --- | --- |
-| 自动了解当前目录并交接 | `workstyle` |
-| 选择以后默认使用的 CLI | `workstyle use claude`（或 `codex`、`cursor`） |
-| 仅本次切换 CLI | `workstyle --harness cursor` |
-| 选择当前项目的原对话继续 | `workstyle resume` |
-| 从其他位置打开指定项目 | `workstyle -C /path/to/project` |
+| 自动了解当前目录并交接 | `llm-work` |
+| 选择以后默认使用的 CLI | `llm-work use claude`（或 `codex`、`cursor`） |
+| 仅本次切换 CLI | `llm-work --harness cursor` |
+| 选择当前项目的原对话继续 | `llm-work resume` |
+| 从其他位置打开指定项目 | `llm-work -C /path/to/project` |
 
-默认项目始终是运行命令时的当前目录，不会自动改成 Workstyle 配置仓库或父目录。`-C`（长名称 `--project`）也适用于其他子命令，例如 `workstyle resume -C /path/to/project`。目标目录必须已存在。
+默认项目始终是运行命令时的当前目录，不会自动改成 Workstyle 配置仓库或父目录。`-C`（长名称 `--project`）也适用于其他子命令，例如 `llm-work resume -C /path/to/project`。目标目录必须已存在。
 
 无具体请求时，启动器会发送一条以当前项目名称开头的交接请求。所选 CLI 先只读查看目录，再根据实际内容分流：
 
@@ -87,12 +87,12 @@ workstyle
 
 | 场景 | 命令 |
 | --- | --- |
-| 直接恢复当前项目最近一次对话 | `workstyle resume --last` |
-| 在新对话中按当前项目任务记录接手 | `workstyle continue` |
-| 启动时提供任务 | `workstyle --request "具体任务"` |
-| 启动时提供学习主题 | `workstyle learn --request "学习主题"` |
-| 复盘当前项目 | `workstyle retro` |
-| 检查 Workstyle 安装 | `workstyle doctor` |
+| 直接恢复当前项目最近一次对话 | `llm-work resume --last` |
+| 在新对话中按当前项目任务记录接手 | `llm-work continue` |
+| 启动时提供任务 | `llm-work --request "具体任务"` |
+| 启动时提供学习主题 | `llm-work learn --request "学习主题"` |
+| 复盘当前项目 | `llm-work retro` |
+| 检查 Workstyle 安装 | `llm-work doctor` |
 
 `resume` 恢复当前 CLI 在本机保存的原对话；`continue` 新开会话，读取项目的 `.workstyle/tasks/` 恢复任务，可以跨 CLI 接续。原生对话历史不会在工具之间转换。已经用 `--request` 提供具体任务或主题时直接处理请求；这些显式操作不会被自动交接流程覆盖。普通启动无需选择模式。对话中也可以明确要求教学、复盘或原型验证；各 CLI 的原生技能命令格式见其技能列表。
 
@@ -108,8 +108,8 @@ teach 与 retro 保留上游的显式调用策略，通过 `learn` / `retro` 入
 
 ```bash
 python3 -m unittest discover -s tests -v
-workstyle doctor
-workstyle doctor --mcp
+llm-work doctor
+llm-work doctor --mcp
 
 # Codex 专用诊断
 python3 workflow/check.py
@@ -128,7 +128,7 @@ Codex 检查器支持 `--codex-home /path/to/codex`，即时报告写入 `workfl
 git pull --ff-only
 python3 workflow/bootstrap.py --harness claude --update
 python3 -m unittest discover -s tests -v
-workstyle doctor --mcp
+llm-work doctor --mcp
 ```
 
 以上 `claude` 替换为所用 CLI；多工具安装可分别更新或使用 `--harness all`。`--update` 按锁文件更新依赖，并仅替换上次安装后未被本地修改的插件或 Codex 受管配置。用户的其他模型配置、provider 和其他 MCP 保留。Codex 技能链接直接指向仓库；Claude / Cursor 使用安装时生成的插件快照。更新后开启新会话。
@@ -137,11 +137,15 @@ workstyle doctor --mcp
 
 仅升级统一入口而保留已有 Codex profile 时，可运行 `python3 workflow/adapter_install.py --harness codex`；不会修改原 profile。
 
+命令已从 `workstyle` 更名为 `llm-work`。更新安装器会先创建新入口，再移除指向本仓库旧入口的受管链接；同名个人文件或其他仓库的链接不会删除。默认工具、插件与项目任务目录继续使用原有记录。`WORKSTYLE_HOME`、`.workstyle/tasks/` 和 Codex profile 名称属于内部存储约定，日常只需使用 `llm-work`。
+
 旧 Codex 安装若没有状态记录，先运行 `python3 workflow/bootstrap.py --skip-deps --update` 登记；仅在当前文件与期望配置一致时登记。内容不同会保留原文件并停止，需要先核对差异。移动克隆目录前按下节撤回原安装，再从新位置安装。
 
 ## 回退与卸载
 
-回退到支持多 CLI 的旧版本时，在干净工作区切换到已验证的 tag / commit，再运行 `python3 workflow/bootstrap.py --harness claude --update`（替换为所用 CLI）。安装状态会验证当前受管文件仍是上一次安装的内容，随后按旧版本重新生成。若回退到仅支持 Codex 的早期版本，先按下方命令卸载新的适配，再切换代码，避免共享入口指向已不存在的文件。
+回退到同样使用 `llm-work` 入口的旧版本时，在干净工作区切换到已验证的 tag / commit，再运行 `python3 workflow/bootstrap.py --harness claude --update`（替换为所用 CLI）。安装状态会验证当前受管文件仍是上一次安装的内容，随后按旧版本重新生成。
+
+若回退到命令更名前的版本（包括多 CLI 版本 `422fcb4` 和仅支持 Codex 的早期版本），先用当前版本的 `adapter_install.py --harness 工具名 --uninstall` 依次卸载所有已登记的统一适配，再切换代码并按目标版本安装，避免留下指向已不存在文件的 `llm-work` 链接。目标版本使用自己的命令名，例如 `422fcb4` 使用 `workstyle`。内部 Codex profile 的撤回按下方专用步骤处理。
 
 卸载 Claude / Cursor 适配（替换工具名）：
 
